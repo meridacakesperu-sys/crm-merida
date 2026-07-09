@@ -20,6 +20,33 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
   console.error('❌ Error conectando a MongoDB:', err);
 });
 
+// --- MIGRATION ENDPOINT ---
+app.get('/api/migrate-now', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const DB_FILE = path.join(__dirname, 'db.json');
+    
+    if (!fs.existsSync(DB_FILE)) {
+      return res.status(404).json({ error: 'No se encontró db.json' });
+    }
+    const raw = fs.readFileSync(DB_FILE);
+    const db = JSON.parse(raw);
+    const students = db.students || [];
+    
+    if (students.length === 0) {
+      return res.status(400).json({ error: 'db.json vacío' });
+    }
+    
+    await Student.deleteMany({});
+    const result = await Student.insertMany(students);
+    
+    res.json({ success: true, message: `Migrados ${result.length} estudiantes exitosamente a MongoDB Atlas.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const resend = new Resend(process.env.RESEND_API_KEY || 're_123456789');
 
 const createEmailTemplate = (title, content) => {

@@ -66,6 +66,24 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.put('/api/auth/password', verifyToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const admin = await Admin.findById(req.user.id);
+    if (!admin) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) return res.status(401).json({ error: 'La contraseña actual es incorrecta' });
+
+    admin.password = await bcrypt.hash(newPassword, 10);
+    await admin.save();
+
+    res.json({ success: true, message: 'Contraseña actualizada exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- MIGRATION ENDPOINT ---
 app.get('/api/migrate-now', async (req, res) => {
   try {

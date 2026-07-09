@@ -7,6 +7,39 @@ const SettingsView = ({ settings, onUpdateSettings }) => {
   const [newPlan, setNewPlan] = useState('');
   const [isSaved, setIsSaved] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [pwdMessage, setPwdMessage] = useState({ text: '', type: '' });
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      setPwdMessage({ text: 'Por favor, llena ambos campos.', type: 'error' });
+      return;
+    }
+    try {
+      const token = localStorage.getItem('crm_token');
+      const res = await fetch('https://crm-merida.onrender.com/api/auth/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPwdMessage({ text: 'Contraseña actualizada con éxito.', type: 'success' });
+        setCurrentPassword('');
+        setNewPassword('');
+      } else {
+        setPwdMessage({ text: data.error || 'Error al cambiar contraseña.', type: 'error' });
+      }
+    } catch (err) {
+      setPwdMessage({ text: 'Error de conexión con el servidor.', type: 'error' });
+    }
+    setTimeout(() => setPwdMessage({ text: '', type: '' }), 4000);
+  };
+
   const handleSave = () => {
     onUpdateSettings(formData);
     setIsSaved(true);
@@ -66,6 +99,59 @@ const SettingsView = ({ settings, onUpdateSettings }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
         
+        {/* Security & Password */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>
+            <Settings size={20} color="#d81b60" /> Seguridad de la Cuenta
+          </h3>
+          
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0' }}>
+            Cambia tu contraseña maestra para acceder al CRM.
+          </p>
+
+          <div className="detail-group">
+            <label className="detail-label">Contraseña Actual</label>
+            <input 
+              type="password" 
+              className="edit-input" 
+              placeholder="••••••••"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+
+          <div className="detail-group">
+            <label className="detail-label">Nueva Contraseña</label>
+            <input 
+              type="password" 
+              className="edit-input" 
+              placeholder="••••••••"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+
+          {pwdMessage.text && (
+            <div style={{ 
+              padding: '10px', 
+              borderRadius: '8px', 
+              fontSize: '0.85rem', 
+              backgroundColor: pwdMessage.type === 'success' ? '#e8f5e9' : '#ffebee',
+              color: pwdMessage.type === 'success' ? '#2e7d32' : '#c62828'
+            }}>
+              {pwdMessage.text}
+            </div>
+          )}
+
+          <button 
+            className="btn-primary" 
+            onClick={handleChangePassword}
+            style={{ backgroundColor: '#d81b60', color: 'white', padding: '10px', borderRadius: '8px', alignSelf: 'flex-start' }}
+          >
+            Actualizar Contraseña
+          </button>
+        </div>
+
         {/* WordPress Integration */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px' }}>

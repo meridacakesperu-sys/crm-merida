@@ -31,7 +31,10 @@ const Dashboard = ({ currentView }) => {
       })
       .catch(err => console.error('Error fetching exchange rate:', err));
 
-    fetch('https://crm-merida.onrender.com/api/students')
+    const token = localStorage.getItem('crm_token');
+    fetch('https://crm-merida.onrender.com/api/students', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => setStudents(data))
       .catch(err => console.error('Error fetching students:', err));
@@ -55,9 +58,13 @@ const Dashboard = ({ currentView }) => {
 
   const updateStudentData = async (updatedStudent) => {
     try {
+      const token = localStorage.getItem('crm_token');
       const response = await fetch(`https://crm-merida.onrender.com/api/students/${updatedStudent.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updatedStudent)
       });
       if(response.ok) {
@@ -71,9 +78,13 @@ const Dashboard = ({ currentView }) => {
 
   const addStudentData = async (newStudent) => {
     try {
+      const token = localStorage.getItem('crm_token');
       const response = await fetch('https://crm-merida.onrender.com/api/students', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(newStudent)
       });
       if(response.ok) {
@@ -87,7 +98,11 @@ const Dashboard = ({ currentView }) => {
 
   const deleteStudentData = async (id) => {
     try {
-      await fetch(`https://crm-merida.onrender.com/api/students/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('crm_token');
+      await fetch(`https://crm-merida.onrender.com/api/students/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       setStudents(prev => prev.filter(student => student.id !== id));
     } catch(err) {
       console.error('Error deleting student:', err);

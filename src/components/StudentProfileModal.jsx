@@ -90,8 +90,10 @@ const StudentProfileModal = ({ student, onClose, onUpdateStudent, onDeleteStuden
     if (window.confirm(`¿Deseas enviar los datos de acceso al correo ${student.email}?`)) {
       setIsSendingCreds(true);
       try {
+        const token = localStorage.getItem('crm_token');
         const response = await fetch(`https://crm-merida.onrender.com/api/students/${student.id}/send-credentials`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
         if (response.ok) {

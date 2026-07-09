@@ -1,8 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, Users, BarChart3, Calendar, MessageSquare, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart3, Calendar, MessageSquare, Settings, LogOut } from 'lucide-react';
 import './Sidebar.css';
 
-const Sidebar = ({ currentView, setCurrentView }) => {
+const Sidebar = ({ currentView, setCurrentView, onLogout }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
@@ -25,6 +25,9 @@ const Sidebar = ({ currentView, setCurrentView }) => {
       <div className="sidebar-bottom">
         <a href="#" className={`nav-item ${currentView === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setCurrentView('settings'); }} title="Configuración de ARmember">
           <Settings size={20} />
+        </a>
+        <a href="#" className="nav-item" onClick={(e) => { e.preventDefault(); onLogout && onLogout(); }} title="Cerrar Sesión" style={{marginTop: '20px', color: '#ff4b4b'}}>
+          <LogOut size={20} />
         </a>
       </div>
     </div>

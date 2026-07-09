@@ -6,6 +6,9 @@ const cron = require('node-cron');
 const { Resend } = require('resend');
 const { syncUserToWP } = require('./wordpress');
 const Student = require('./models/Student');
+const Admin = require('./models/Admin');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,11 +16,54 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// --- DATABASE CONNECTION ---
-mongoose.connect(process.env.MONGO_URI).then(() => {
+// --- DATABASE CONNECTION & ADMIN SEED ---
+mongoose.connect(process.env.MONGO_URI).then(async () => {
   console.log('✅ Conectado a MongoDB Atlas exitosamente');
+  
+  // Seed default admin
+  const adminCount = await Admin.countDocuments();
+  if (adminCount === 0) {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await Admin.create({ username: 'admin', password: hashedPassword });
+    console.log('✅ Usuario administrador por defecto creado: admin / admin123');
+  }
 }).catch(err => {
   console.error('❌ Error conectando a MongoDB:', err);
+});
+
+// --- JWT SECRET ---
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-crm-merida';
+
+// --- AUTH MIDDLEWARE ---
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No autorizado. Token no provisto.' });
+  
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Token inválido o expirado.' });
+  }
+};
+
+// --- AUTH ENDPOINTS ---
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const admin = await Admin.findOne({ username });
+    if (!admin) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+    
+    const token = jwt.sign({ id: admin._id, username: admin.username }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, username: admin.username });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // --- MIGRATION ENDPOINT ---
@@ -107,7 +153,7 @@ const generatePassword = () => {
 // --- API ENDPOINTS ---
 
 // GET: Listar todos los estudiantes
-app.get('/api/students', async (req, res) => {
+app.get('/api/students', verifyToken, async (req, res) => {
   try {
     const students = await Student.find().sort({ id: 1 });
     res.json(students);
@@ -117,7 +163,7 @@ app.get('/api/students', async (req, res) => {
 });
 
 // POST: Crear nuevo estudiante y enviar Bienvenida
-app.post('/api/students', async (req, res) => {
+app.post('/api/students', verifyToken, async (req, res) => {
   try {
     const newStudentData = { id: Date.now(), ...req.body };
     
@@ -165,7 +211,7 @@ app.post('/api/students', async (req, res) => {
 });
 
 // PUT: Actualizar estudiante
-app.put('/api/students/:id', async (req, res) => {
+app.put('/api/students/:id', verifyToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -192,7 +238,7 @@ app.put('/api/students/:id', async (req, res) => {
 });
 
 // POST: Reenviar credenciales manualmente
-app.post('/api/students/:id/send-credentials', async (req, res) => {
+app.post('/api/students/:id/send-credentials', verifyToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const student = await Student.findOne({ id: id });
@@ -236,7 +282,7 @@ app.post('/api/students/:id/send-credentials', async (req, res) => {
 });
 
 // DELETE: Eliminar estudiante
-app.delete('/api/students/:id', async (req, res) => {
+app.delete('/api/students/:id', verifyToken, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     await Student.deleteOne({ id: id });

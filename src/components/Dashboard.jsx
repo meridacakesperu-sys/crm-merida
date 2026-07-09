@@ -31,7 +31,7 @@ const Dashboard = ({ currentView }) => {
       })
       .catch(err => console.error('Error fetching exchange rate:', err));
 
-    fetch('http://localhost:3001/api/students')
+    fetch('https://crm-merida.onrender.com/api/students')
       .then(res => res.json())
       .then(data => setStudents(data))
       .catch(err => console.error('Error fetching students:', err));
@@ -55,7 +55,7 @@ const Dashboard = ({ currentView }) => {
 
   const updateStudentData = async (updatedStudent) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/students/${updatedStudent.id}`, {
+      const response = await fetch(`https://crm-merida.onrender.com/api/students/${updatedStudent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedStudent)
@@ -71,7 +71,7 @@ const Dashboard = ({ currentView }) => {
 
   const addStudentData = async (newStudent) => {
     try {
-      const response = await fetch('http://localhost:3001/api/students', {
+      const response = await fetch('https://crm-merida.onrender.com/api/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newStudent)
@@ -87,7 +87,7 @@ const Dashboard = ({ currentView }) => {
 
   const deleteStudentData = async (id) => {
     try {
-      await fetch(`http://localhost:3001/api/students/${id}`, { method: 'DELETE' });
+      await fetch(`https://crm-merida.onrender.com/api/students/${id}`, { method: 'DELETE' });
       setStudents(prev => prev.filter(student => student.id !== id));
     } catch(err) {
       console.error('Error deleting student:', err);

@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  fecha: { type: String, required: true },
-  monto: { type: String, required: true },
-  moneda: { type: String, required: true },
-  concepto: { type: String, required: true },
+  id: { type: Number },
+  fecha: { type: String },
+  monto: { type: String },
+  moneda: { type: String },
+  concepto: { type: String },
   planAnterior: { type: String }
 }, { _id: false });
 
